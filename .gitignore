@@ -69,3 +69,6 @@ cyanview-*.html
 # Coverage data (pytest-cov)
 .coverage
 htmlcov/
+
+registry/
+secrets/
