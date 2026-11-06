@@ -40,7 +40,7 @@ def test_single_record_write_is_token_gated_and_not_sent(model, method, args_jso
     assert resp.success is False
     assert resp.pending_confirmation is True
     assert resp.safety is not None and resp.safety.requires_confirmation is True
-    assert "confirmation_token=" in resp.hint
+    assert "confirmation_ref=" in resp.hint
     assert client.execute_method.call_count == 0
 
 
@@ -48,7 +48,7 @@ def test_confirmed_single_write_executes_and_reports_its_classification():
     client = MagicMock()
     client.execute_method.return_value = True
     first = _call(client, model="res.partner", method="write", args_json='[[42], {"name": "x"}]')
-    token = first.hint.split("confirmation_token='")[1].split("'")[0]
+    token = first.hint.split("confirmation_ref='")[1].split("'")[0]
     resp = _call(
         client,
         model="res.partner",

@@ -39,6 +39,10 @@ class ExecuteMethodResponse(BaseModel):
     pending_confirmation: bool = Field(
         default=False, description="Whether the operation requires confirmation before execution"
     )
+    confirmation_ref: Optional[str] = Field(
+        default=None,
+        description="Single-use nonce for a pending confirmation; pass it back as the confirmation_token argument",
+    )
     safety: Optional[SafetyClassification] = Field(default=None, description="Safety classification of the operation")
 
 
@@ -63,6 +67,10 @@ class BatchExecuteResponse(BaseModel):
     execution_time_ms: Optional[float] = Field(default=None, description="Total execution time in milliseconds")
     pending_confirmation: bool = Field(
         default=False, description="Whether the batch requires confirmation before execution"
+    )
+    confirmation_ref: Optional[str] = Field(
+        default=None,
+        description="Single-use nonce for a pending confirmation; pass it back as the confirmation_token argument",
     )
     safety_preview: Optional[List[SafetyClassification]] = Field(
         default=None, description="Safety classifications for each operation"
