@@ -32,6 +32,8 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "cryptography>=42",
     "anyio>=4",
+    # Markdown → HTML for html fields and chatter bodies (markdown_html.py).
+    "markdown-it-py>=3",
 ]
 
 [project.urls]
