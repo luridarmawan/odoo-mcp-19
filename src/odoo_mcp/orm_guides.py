@@ -72,7 +72,8 @@ def mail_thread_reference() -> Dict[str, Any]:
             "outgoing_email_to=False, incoming_email_to=False, incoming_email_cc=False, attachments=None, "
             "attachment_ids=None, body_is_html=False, **kwargs)",
             "params": {
-                "body": "Escaped as plain text unless body_is_html=true.",
+                "body": "Escaped as plain text unless body_is_html=true. Through this server Markdown is converted to "
+                "HTML and body_is_html=true is set automatically (MCP_MARKDOWN_TO_HTML=false disables it).",
                 "body_is_html": "Set true to post HTML — documented 'to be used only for RPC calls'.",
                 "message_type": "'comment' for a real note/message, 'notification' (default) for system lines.",
                 "subtype_xmlid": "'mail.mt_comment' to send to followers, 'mail.mt_note' for an internal note.",

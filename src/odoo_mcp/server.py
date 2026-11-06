@@ -40,6 +40,7 @@ from .constants import (
     _validate_method,
     _validate_model,
 )
+from .markdown_html import convert_markdown_payload
 from .models import (
     BatchExecuteResponse,
     BatchOperationResult,
@@ -602,6 +603,11 @@ _tool_icons = [ODOO_ICON] if ODOO_ICON else None
     confirmation_ref (in the response and the hint). After reviewing the classification,
     re-call with the identical arguments plus confirmed=true and
     confirmation_token=<that confirmation_ref>; confirmed=true alone is refused.
+
+    FORMATTING: write Markdown in html fields (e.g. project.task description,
+    mail.message body) and in message_post body / activity_schedule note — it is
+    converted to HTML before sending (message_post also gets body_is_html=true).
+    Values that already contain HTML tags are sent unchanged.
     """,
     annotations={
         "title": "Execute Odoo Method",
@@ -700,6 +706,7 @@ def execute_method(
             return gated
 
         args, kwargs = _apply_search_defaults(method, args, kwargs)
+        args, kwargs = convert_markdown_payload(model, method, args, kwargs, _fields_loader(odoo))
         result = odoo.execute_method(model, method, *args, **kwargs)
         return ExecuteMethodResponse(
             success=True, result=result, safety=classification, execution_time_ms=_elapsed_ms(start_time)
@@ -837,6 +844,7 @@ async def _run_batch_operation(odoo: Any, idx: int, op: Dict[str, Any]) -> Batch
     """Parse, then execute one operation off the loop thread; never raises."""
     try:
         model, method, args, kwargs = _parse_batch_operation(idx, op)
+        args, kwargs = await _run_blocking(convert_markdown_payload, model, method, args, kwargs, _fields_loader(odoo))
         result = await _run_blocking(odoo.execute_method, model, method, *args, **kwargs)
         return BatchOperationResult(operation_index=idx, success=True, result=result)
     except Exception as e:
