@@ -194,6 +194,20 @@ def _confirmation_gate(
     return _GateDecision("proceed")
 
 
+def _confirmation_hint(tool: str, token: str) -> str:
+    """Re-call instructions for a pending confirmation.
+
+    The nonce is labelled ``confirmation_ref`` rather than ``confirmation_token=...``
+    because MCP gateways (e.g. TeamThumb/Paperclip) redact ``*_token='...'``
+    assignments in tool output as credentials, stripping the nonce before the
+    caller can echo it back. The input argument is still ``confirmation_token``.
+    """
+    return (
+        f"Re-call {tool} with confirmed=true, passing confirmation_ref as the "
+        f"confirmation_token argument (confirmation_ref='{token}')."
+    )
+
+
 # ----- execute_method phases -----
 
 
@@ -400,10 +414,8 @@ def _classify_and_gate(
                     pending_confirmation=True,
                     safety=classification,
                     error=message,
-                    hint=(
-                        f"Re-call execute_method with confirmed=true and "
-                        f"confirmation_token='{decision.token}' to proceed."
-                    ),
+                    hint=_confirmation_hint("execute_method", decision.token),
+                    confirmation_ref=decision.token,
                     execution_time_ms=_elapsed_ms(start_time),
                 ),
                 classification,
@@ -588,9 +600,9 @@ _tool_icons = [ODOO_ICON] if ODOO_ICON else None
     - odoo://module-knowledge/{name} - Module-specific methods
 
     SAFETY: Dangerous operations return pending_confirmation=true with a single-use
-    confirmation_token in the hint. After reviewing the classification, re-call with the
-    identical arguments plus confirmed=true and that confirmation_token; confirmed=true
-    alone is refused.
+    confirmation_ref (in the response and the hint). After reviewing the classification,
+    re-call with the identical arguments plus confirmed=true and
+    confirmation_token=<that confirmation_ref>; confirmed=true alone is refused.
 
     FORMATTING: write Markdown in html fields (e.g. project.task description,
     mail.message body) and in message_post body / activity_schedule note — it is
@@ -794,10 +806,11 @@ def _batch_safety_gate(
                 start_time,
                 success=False,
                 error=(
-                    "Batch contains operations that require confirmation. Review safety_preview "
-                    f"and re-call with confirmed=true and confirmation_token='{decision.token}'."
+                    "Batch contains operations that require confirmation. Review safety_preview, then "
+                    + _confirmation_hint("batch_execute", decision.token)
                 ),
                 pending_confirmation=True,
+                confirmation_ref=decision.token,
                 safety_preview=classifications,
                 overall_risk=overall_risk.value,
             )
@@ -842,9 +855,10 @@ async def _run_batch_operation(odoo: Any, idx: int, op: Dict[str, Any]) -> Batch
     description="""Execute multiple Odoo operations in a batch with progress tracking.
 
     SAFETY: Dangerous operations return pending_confirmation=true with a single-use
-    confirmation_token in the error message, bound to the whole operations list. After
-    reviewing the safety preview, re-call with the identical operations plus
-    confirmed=true and that confirmation_token; confirmed=true alone is refused.
+    confirmation_ref (in the response and the error message), bound to the whole
+    operations list. After reviewing the safety preview, re-call with the identical
+    operations plus confirmed=true and confirmation_token=<that confirmation_ref>;
+    confirmed=true alone is refused.
 
     atomic=True stops at the first failure; it does not roll back. Each operation is a
     separate request, so operations that completed stay committed.""",

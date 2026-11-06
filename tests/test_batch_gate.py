@@ -42,7 +42,7 @@ def _batch(operations, **kwargs):
 
 
 def _token_in(response) -> str:
-    match = re.search(r"confirmation_token='([^']+)'", response.error or "")
+    match = re.search(r"confirmation_ref='([^']+)'", response.error or "")
     assert match, f"no confirmation token offered: {response.error!r}"
     return match.group(1)
 
